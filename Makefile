@@ -9,7 +9,7 @@ all: win64
 win64: vst.dll
 
 vst.dll: src/WineVSTWrapper.cpp
-	$(CXX) $(BUILD_FLAGS) -o vst.dll
+	$(CXX) $^ $(BUILD_FLAGS) -o vst.dll 
 
 clean:
 	rm -f *.dll
