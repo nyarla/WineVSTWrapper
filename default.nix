@@ -4,6 +4,7 @@ with pkgs;
 
 mkShell rec {
   name = "wine-vst-wrapper";
-  nativeBuildInputs = with pkgsCross.mingwW64; [ buildPackages.gcc ];
+  nativeBuildInputs = (with pkgsCross.mingwW64; [ buildPackages.gcc ])
+    ++ [ bear ];
   NIX_INCLUDE_PATH = "${pkgsCross.mingwW64.windows.mingw_w64_headers}/include";
 }
