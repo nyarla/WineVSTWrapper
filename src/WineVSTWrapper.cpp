@@ -15,7 +15,7 @@ BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved) {
 
   if (hPlugin == NULL) {
     char proxyDllPath[MAX_PATH + 1];
-    char winegccDllPath[MAX_PATH + 1];
+    char winegccDllPath[MAX_PATH + 4];
 
     ::GetModuleFileNameA(hModule, proxyDllPath, MAX_PATH);
     snprintf(winegccDllPath, strlen(proxyDllPath) + 4, "%s.so", proxyDllPath);
