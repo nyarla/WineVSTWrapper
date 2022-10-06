@@ -1,6 +1,6 @@
-#include <windows.h>
-#include <stdio.h>
 #include "aeffectx.hpp"
+#include <stdio.h>
+#include <windows.h>
 
 typedef AEffect *WINAPI (*VSTPluginMainFunc)(audioMasterCallback);
 
@@ -11,6 +11,23 @@ static volatile VSTPluginMainFunc instantiate = nullptr;
 BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved) {
   if (hModule == NULL) {
     hModule = hinstDLL;
+  }
+
+  if (hPlugin == NULL) {
+    char proxyDllPath[MAX_PATH + 1];
+    char winegccDllPath[MAX_PATH + 1];
+
+    ::GetModuleFileNameA(hModule, proxyDllPath, MAX_PATH);
+    snprintf(winegccDllPath, strlen(proxyDllPath) + 4, "%s.so", proxyDllPath);
+
+    hPlugin = ::LoadLibraryA(winegccDllPath);
+
+    if (hPlugin == NULL) {
+      return FALSE;
+    }
+
+    instantiate = reinterpret_cast<VSTPluginMainFunc>(
+        reinterpret_cast<void *>(::GetProcAddress(hPlugin, "VSTPluginMain")));
   }
 
   switch (fdwReason) {
@@ -33,22 +50,10 @@ BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved) {
 
 extern "C" __declspec(dllexport) AEffect *VSTPluginMain(
     audioMasterCallback callback) {
-  char fullpath[MAX_PATH + 1];
-  char dllpath[MAX_PATH + 1];
 
-  ::GetModuleFileNameA(hModule, fullpath, MAX_PATH);
-  snprintf(dllpath, strlen(fullpath) + 4, "%s.so", fullpath);
-
-  hPlugin = ::LoadLibraryA(dllpath);
-  if (hPlugin == NULL) {
-    return nullptr;
+  if (instantiate != nullptr) {
+    return instantiate(callback);
   }
 
-  instantiate = reinterpret_cast<VSTPluginMainFunc>(
-      (::GetProcAddress(hPlugin, "VSTPluginMain")));
-  if (instantiate == nullptr) {
-    return nullptr;
-  }
-
-  return instantiate(callback);
+  return nullptr;
 };
